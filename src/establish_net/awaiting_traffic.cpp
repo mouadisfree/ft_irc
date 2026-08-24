@@ -68,7 +68,6 @@ void	Server::removeClientFromChannels(Client &client)
 				++a;
 		}
 
-		// Tell the people still in the channel that this user is gone.
 		if (wasMember && !client.nickName.empty())
 		{
 			std::string	quit = ":" + client.nickName + "!" + client.userName
@@ -78,8 +77,6 @@ void	Server::removeClientFromChannels(Client &client)
 				queueMessage((*m)->socket_fd, quit);
 		}
 
-		// An empty channel would only survive as a shell holding a dangling
-		// admin pointer, so destroy it (this also frees the Channel).
 		if (chan->_members.empty())
 		{
 			std::map<std::string, Channel*>::iterator dead = it++;
@@ -88,7 +85,6 @@ void	Server::removeClientFromChannels(Client &client)
 			continue ;
 		}
 
-		// The founder left: hand the channel to somebody who is still here.
 		if (chan->admin == &client)
 		{
 			chan->admin = chan->_members[0];
@@ -110,12 +106,8 @@ void	Server::clearClients(std::vector<int> BeRemoved, fd_set &totalfds)
 		if (clientFound == clients.end())
 			continue ;
 
-		// Logged here, and only here, so that every departure is reported
-		// exactly once - whether the client sent QUIT, dropped the link, or
-		// hit a socket error.
 		std::cout << "\033[0;31mClient : " << clientFound->first << " disconnected...\033[0m" << std::endl;
 
-		// Must run before the Client object is destroyed.
 		removeClientFromChannels(clientFound->second);
 
 		close(clientFound->first);
@@ -126,21 +118,15 @@ void	Server::clearClients(std::vector<int> BeRemoved, fd_set &totalfds)
 	}
 }
 
-// Split one IRC line into command + parameters, following the grammar
-//     [:prefix] COMMAND param1 param2 ... [:trailing]
-// Everything after the first " :" is ONE parameter and may contain spaces,
-// which is what makes "USER u 0 * :Real Name" and "PRIVMSG #c :a b c" work.
 static void	parseLine(const std::string &line, request &req)
 {
 	std::string	work = line;
 
-	// A stray '\r' survives when the client terminates with "\r\n".
 	if (!work.empty() && work[work.size() - 1] == '\r')
 		work.erase(work.size() - 1);
 
 	size_t	start = 0;
 
-	// An optional prefix is part of the protocol but is not a parameter.
 	if (!work.empty() && work[0] == ':')
 	{
 		size_t	space = work.find(' ');
@@ -150,7 +136,6 @@ static void	parseLine(const std::string &line, request &req)
 		start = space + 1;
 	}
 
-	// Peel off the trailing parameter before tokenising the rest.
 	std::string	trailing;
 	bool		hasTrailing = false;
 	size_t		sep = work.find(" :", start);
@@ -185,13 +170,9 @@ void    Server::handleReadRequest(Client &client)
 
 	if (bytes_received < 0)
 	{
-		// Nothing readable after all. Never retry in place: return to the
-		// event loop and wait until select() reports readiness again.
 		if (errno == EAGAIN || errno == EWOULDBLOCK)
 			return;
 
-		// The departure is announced by clearClients(), which runs for every
-		// disconnect path.
 		client.step = C_CLOSE_CONNECTION;
 		return;
 	}
@@ -224,8 +205,6 @@ void    Server::handleReadRequest(Client &client)
 		{
 			if (client.authenticated == false)
 			{
-				// The <servername> a client sends in USER is meaningless to us
-				// (it is "*" by convention); report our own name instead.
 				send_message(client.socket_fd, RPL_WELCOME(client.nickName));
 				send_message(client.socket_fd, RPL_YOURHOST(client.nickName, std::string("irc.server.com")));
 				send_message(client.socket_fd, RPL_CREATED(client.nickName));

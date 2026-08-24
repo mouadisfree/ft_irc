@@ -1,6 +1,5 @@
 #include "../../headers/server.hpp"
 
-
 int Server::pass(Client& client, request &p)
 {
     if (p.arg.empty())
@@ -20,20 +19,17 @@ int Server::pass(Client& client, request &p)
     }
     else
     {
-        // A NOTICE is valid IRC, so real clients display it correctly. Bare
-        // text without a prefix and command is not a legal IRC message.
         send_message(client.socket_fd, ":irc.server.com NOTICE * :Password accepted, please send NICK\r\n");
     }
     return 0;
 }
-
 
 void Server::Nick(Client& cli, request &p)
 {
     std::string nick = p.cmd;
     bool etat = true;
     std::map<int,Client>::iterator it;
-    
+
     if (p.arg.empty())
     {
         send_message(cli.socket_fd, ERR_NONICKNAMEGIVEN());
@@ -61,9 +57,6 @@ void Server::Nick(Client& cli, request &p)
 
 void Server::user(Client& cli, request &p)
 {
-    // USER <username> <hostname> <servername> :<realname>
-    // The realname arrives as the trailing parameter, already assembled by
-    // the parser, so it may legitimately contain spaces.
     if (p.arg.size() < 4)
     {
         cli.count = 2;

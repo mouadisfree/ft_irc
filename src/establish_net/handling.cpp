@@ -1,9 +1,6 @@
 #include "../../headers/server.hpp"
 #include <string>
 
-// Single entry point for every outgoing byte in the server.
-// Nothing is written to a socket here: the message is appended to that
-// client's output buffer, and select() decides later when it may be sent.
 void Server::queueMessage(int sockfd, const std::string &message)
 {
     std::map<int, Client>::iterator it = clients.find(sockfd);
@@ -14,8 +11,6 @@ void Server::queueMessage(int sockfd, const std::string &message)
     it->second.outBuffer += message;
 }
 
-// Single place where send() is ever called. Reached only when select()
-// has reported this socket as writable.
 void Server::flushClient(Client &client)
 {
     if (client.outBuffer.empty())
@@ -25,14 +20,10 @@ void Server::flushClient(Client &client)
 
     if (sent > 0)
     {
-        // send() may accept only part of the buffer: keep the remainder
-        // queued and let the next writable event carry on.
         client.outBuffer.erase(0, static_cast<size_t>(sent));
         return;
     }
 
-    // Socket is full right now. Keep the data and wait for the next
-    // writable event instead of spinning on send().
     if (sent < 0 && (errno == EAGAIN || errno == EWOULDBLOCK))
         return;
 

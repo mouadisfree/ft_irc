@@ -5,13 +5,6 @@
 #define C_RESPONSE_TO_REQUEST 3
 #define C_CLOSE_CONNECTION 4
 
-// Every reply below follows the IRC reply grammar:
-//     :<server> <numeric> <target> [params] :<text>
-// The target is '*' where the client's nickname is not known to the macro.
-// NOTE: a reply must never start with the word "ERROR" - that is a real IRC
-// command telling the client the connection is being terminated, and clients
-// disconnect when they see it.
-
 #define RPL_WELCOME(nickname)   (":irc.server.com 001 " + nickname + " :Welcome to the IRC Server, " + nickname + "!\r\n")
 #define RPL_YOURHOST(client, servername) (":irc.server.com 002 " + client + " :Your host is " + servername + ", running version IRCd-1.0\r\n")
 #define RPL_CREATED(client) (":irc.server.com 003 " + client + " :This server was created on January 1, 2022\r\n")

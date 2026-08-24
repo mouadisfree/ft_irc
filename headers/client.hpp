@@ -19,7 +19,7 @@ struct Client {
 
 	int	socket_fd;
 	int step;
-	
+
 	std::string pass;
 	std::string nickName;
 	std::string hostName;

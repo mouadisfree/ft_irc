@@ -1,7 +1,3 @@
-// /*  step 1 : connecting to the server
-//     step 2 : authentification the user
-//     step 3 : join the channel
-// */
 
 #include "../../headers/server.hpp"
 #include <cstddef>
@@ -39,14 +35,11 @@ void Server::sendMessageToClient(request& req, Client& cli, int client_dest)
         return;
     }
 
-    // The message body is the trailing parameter, already assembled.
     str = req.arg[1];
 
     msg = ":" + cli.nickName + "!~" + cli.userName + "@localhost PRIVMSG " + req.arg[0] + " :" + str + "\r\n";
     queueMessage(client_dest, msg);
 }
-
-
 
 int Server::getAuthentified(Client& cli, request& req)
 {
@@ -69,8 +62,6 @@ int Server::getAuthentified(Client& cli, request& req)
 
     if (req.cmd == "PRIVMSG")
     {
-        // Without a target there is nothing to index: reject before touching
-        // req.arg[0].
         if (req.arg.empty() || req.arg[0].empty())
         {
             send_message(cli.socket_fd, ERR_NORECIPIENT(req.cmd));
@@ -91,9 +82,6 @@ int Server::getAuthentified(Client& cli, request& req)
     }
     else if (req.cmd == "CAP")
     {
-        // Real clients open the connection with "CAP LS" and WAIT for a valid
-        // reply before sending PASS/NICK/USER. We advertise no capabilities,
-        // but the answer must still be well formed or the client hangs here.
         if (!req.arg.empty() && (req.arg[0] == "LS" || req.arg[0] == "LIST"))
             send_message(cli.socket_fd, ":irc.server.com CAP * " + req.arg[0] + " :\r\n");
         else if (!req.arg.empty() && req.arg[0] == "REQ")
@@ -101,7 +89,6 @@ int Server::getAuthentified(Client& cli, request& req)
             std::string wanted = (req.arg.size() > 1) ? req.arg[1] : std::string("");
             send_message(cli.socket_fd, ":irc.server.com CAP * NAK :" + wanted + "\r\n");
         }
-        // "CAP END" needs no reply; the client just proceeds to register.
     }
     else if (req.cmd == "WHOIS")
     {
@@ -109,7 +96,6 @@ int Server::getAuthentified(Client& cli, request& req)
     }
     else if (req.cmd == "PING")
     {
-        // Echo back the token the client sent, as the protocol requires.
         std::string token = req.arg.empty() ? std::string("irc.server.com") : req.arg[0];
         send_message(cli.socket_fd, ":irc.server.com PONG irc.server.com :" + token + "\r\n");
     }

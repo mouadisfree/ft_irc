@@ -3,13 +3,13 @@
 void	Server::setupListener()
 {
 	sockaddr_in address;
-	
+
 	address.sin_family = AF_INET;
 
 	address.sin_port = htons(this->port);
 
-	address.sin_addr.s_addr = htonl(INADDR_ANY); 
-	
+	address.sin_addr.s_addr = htonl(INADDR_ANY);
+
 	if ((server_fd = socket(AF_INET, SOCK_STREAM, 0)) < 0)
 		throw std::runtime_error("Cannot create a socket.");
 
@@ -26,6 +26,6 @@ void	Server::setupListener()
 
 	if (fcntl(server_fd, F_SETFL, O_NONBLOCK) < 0)
 		throw std::runtime_error("Cannot set the socket to non-blocking.");
-	
+
 	std::cout << "irc is listening at 0.0.0.0:" << port << std::endl;
 }

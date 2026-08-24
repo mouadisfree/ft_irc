@@ -36,7 +36,7 @@ class Server {
 		int			port;
 		std::string	password;
 		int 		server_fd;
-		
+
 		std::map<int, Client>	clients;
 		std::map<std::string, Channel*>	channels;
 

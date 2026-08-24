@@ -6,8 +6,6 @@
 #include <string>
 #include <vector>
 
-// Look a channel up WITHOUT the operator[] trap: channels[name] would insert
-// a NULL Channel* for an unknown name, which the next dereference crashes on.
 Channel	*Server::getChannel(const std::string &name)
 {
     std::map<std::string, Channel*>::iterator it = channels.find(name);
@@ -17,7 +15,6 @@ Channel	*Server::getChannel(const std::string &name)
     return it->second;
 }
 
-// Operator status lives in the channel's `admins` list - never in the nickname.
 bool	Server::isOperator(Channel *chan, Client &cli)
 {
     if (chan == NULL)
@@ -31,8 +28,6 @@ bool	Server::isOperator(Channel *chan, Client &cli)
     return false;
 }
 
-// A channel with no topic must answer 331, not an empty 332. When there IS a
-// topic, 333 has to carry both the setter and a unix timestamp.
 void Server::sendTopicReply(Client &t, Channel *chan)
 {
     if (chan->get_topic().empty())
@@ -80,7 +75,6 @@ void Server::joinChannel(std::string &channel, Client &t, request& p)
     chan->_members.push_back(&t);
     t._channel.push_back(channel);
 
-    // Build the NAMES list, prefixing operators with '@' for DISPLAY only.
     chan->member_str = ":irc.server.com 353 " + t.nickName + " = " + channel + " :";
     for (std::vector<Client*>::iterator it = chan->_members.begin(); it != chan->_members.end(); ++it)
     {
@@ -96,8 +90,6 @@ void Server::joinChannel(std::string &channel, Client &t, request& p)
     send_message(t.socket_fd, ":irc.server.com 366 " + t.nickName + " " + channel + " :End of /NAMES list.\r\n");
 }
 
-// Is the channel full? Compare against the CHANNEL's own membership, not a
-// server-wide counter of how many JOINs have ever been attempted.
 bool Server::checkLimits(request& req, int *user)
 {
     (void)user;
@@ -114,8 +106,6 @@ std::string Server::join(Client &client, request &p)
 {
     static int user_size = 0;
 
-    // The parameter check must come FIRST: p.arg[0] is out of bounds when
-    // the client sent a bare "JOIN".
     if (p.arg.empty() || p.arg[0].empty())
     {
         send_message(client.socket_fd, ERR_NEEDMOREPARAMS(p.cmd));
@@ -150,8 +140,6 @@ std::string Server::join(Client &client, request &p)
     {
         Channel *chan = (*it).second;
 
-        // On an invite-only channel, only someone holding an invitation gets
-        // in. The invitation is consumed on use.
         std::vector<std::string>::iterator inv =
             std::find(chan->invitedUsers.begin(), chan->invitedUsers.end(), client.nickName);
 
@@ -170,7 +158,6 @@ std::string Server::join(Client &client, request &p)
     return "";
 }
 
-
 int Server::joinClient(Client& client, request& p, std::map<std::string,Channel*>::iterator it)
 {
     (void)it;
@@ -183,7 +170,6 @@ int Server::joinClient(Client& client, request& p, std::map<std::string,Channel*
         return 1;
     }
 
-    // Mode +k: the correct key must be supplied with the JOIN.
     if (chan->hasPassword)
     {
         if (p.arg.size() < 2)
@@ -210,8 +196,6 @@ void Server::sendMSGToChannel(Client& cli, request& req)
     bool etat = false;
     std::vector<Client*>::iterator it;
 
-    // find() instead of operator[]: operator[] would INSERT a NULL Channel*
-    // for an unknown name and the next dereference would crash.
     std::map<std::string, Channel*>::iterator chanIt = channels.find(req.arg[0]);
 
     if (chanIt == channels.end() || chanIt->second == NULL)
@@ -243,7 +227,6 @@ void Server::sendMSGToChannel(Client& cli, request& req)
         return;
     }
 
-    // The message body is the trailing parameter, already assembled.
     str = req.arg[1];
 
     msg = ":" + cli.nickName + "!" + cli.userName + "@localhost PRIVMSG " + req.arg[0] + " :" + str + "\r\n";
@@ -256,7 +239,6 @@ void Server::sendMSGToChannel(Client& cli, request& req)
     }
 }
 
-// PART <channel> [:reason] - the client leaves a channel it is currently on.
 void Server::part(Client &client, request &p)
 {
     if (p.arg.empty() || p.arg[0].empty())
@@ -293,7 +275,6 @@ void Server::part(Client &client, request &p)
     std::string msg = ":" + client.nickName + "!" + client.userName
         + "@localhost PART " + p.arg[0] + " :" + reason + "\r\n";
 
-    // Announce while the leaver is still a member, so they see it too.
     send_just_member(msg, p.arg[0]);
 
     for (std::vector<Client*>::iterator m = chan->_members.begin(); m != chan->_members.end(); )
@@ -317,7 +298,6 @@ void Server::part(Client &client, request &p)
     if (ch != client._channel.end())
         client._channel.erase(ch);
 
-    // Nobody left: destroy the channel rather than keep an empty shell.
     if (chan->_members.empty())
     {
         std::map<std::string, Channel*>::iterator dead = channels.find(p.arg[0]);
@@ -330,7 +310,6 @@ void Server::part(Client &client, request &p)
         return;
     }
 
-    // The founder left: hand the channel to a remaining member.
     if (chan->admin == &client)
     {
         chan->admin = chan->_members[0];
@@ -340,22 +319,16 @@ void Server::part(Client &client, request &p)
     }
 }
 
-// QUIT [:reason] - the client closes its session.
 void Server::quit(Client &client, request &p)
 {
     if (!p.arg.empty() && !p.arg[0].empty())
         client.quitReason = p.arg[0];
 
-    // The channels are notified and cleaned up by clearClients(), which runs
-    // at the end of this event-loop round.
     client.step = C_CLOSE_CONNECTION;
 }
 
-// kick <channel> <nickname>
-
 std::string Server::kick(Client &client, request &p)
 {
-    // Validate parameters BEFORE touching p.arg[0] / p.arg[1].
     if (p.arg.size() < 2)
     {
         send_message(client.socket_fd, ERR_NEEDMOREPARAMS(p.cmd));
@@ -395,7 +368,6 @@ std::string Server::kick(Client &client, request &p)
 
         Client *target = *it;
 
-        // Tell the channel first, while the target is still a member.
         send_just_member(KICKUSER(client.nickName, client.userName, p.arg[0], p.arg[1]), p.arg[0]);
 
         std::vector<std::string>::iterator ch =
@@ -405,7 +377,6 @@ std::string Server::kick(Client &client, request &p)
 
         chan->_members.erase(it);
 
-        // A kicked user must not keep operator rights on the channel.
         for (std::vector<Client*>::iterator a = chan->admins.begin(); a != chan->admins.end(); )
         {
             if (*a == target)
@@ -424,7 +395,6 @@ std::string Server::kick(Client &client, request &p)
     return ("");
 }
 
-// invite <nickname> <channel>
 std::string Server::invite(Client &client, request &p)
 {
     if (p.arg.size() < 2)
@@ -441,21 +411,18 @@ std::string Server::invite(Client &client, request &p)
         return "";
     }
 
-    // The inviter must be on the channel...
     if (std::find(client._channel.begin(), client._channel.end(), p.arg[1]) == client._channel.end())
     {
         send_message(client.socket_fd, ERR_NOTONCHANNEL(client.nickName, p.arg[1]));
         return "";
     }
 
-    // ...and must be an operator to invite into an invite-only channel.
     if (chan->inviteOnly && !isOperator(chan, client))
     {
         send_message(client.socket_fd, ERR_CHANOPRIVSNEEDED(p.arg[1]));
         return "";
     }
 
-    // The INVITEE must exist.
     Client *target = NULL;
     for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); ++it)
     {
@@ -472,8 +439,6 @@ std::string Server::invite(Client &client, request &p)
         return "";
     }
 
-    // Reject only if the INVITEE is already there - not the inviter, who is
-    // required to be a member in the first place.
     for (std::vector<Client *>::iterator m = chan->_members.begin(); m != chan->_members.end(); ++m)
     {
         if (*m == target)
@@ -483,8 +448,6 @@ std::string Server::invite(Client &client, request &p)
         }
     }
 
-    // Record the invitation. Channel modes are NOT altered: inviting one
-    // person must not open the channel up for everybody else.
     if (std::find(chan->invitedUsers.begin(), chan->invitedUsers.end(), p.arg[0]) == chan->invitedUsers.end())
         chan->invitedUsers.push_back(p.arg[0]);
 
@@ -527,25 +490,20 @@ std::string Server::Topic(Client &client, request &p)
         return ("");
     }
 
-    // "TOPIC #chan" with no text is a QUERY, not an error.
     if (p.arg.size() < 2)
     {
         sendTopicReply(client, chan);
         return ("");
     }
 
-    // Mode +t restricts topic changes to operators.
     if (chan->changeTopic && !isOperator(chan, client))
     {
         send_message(client.socket_fd, ERR_CHANOPRIVSNEEDED(p.arg[0]));
         return ("");
     }
 
-    // The topic text is the trailing parameter, already assembled.
     chan->set_topic(p.arg[1], client.nickName);
 
-    // Echo the change as a TOPIC command so clients update their title bar,
-    // and send it to the channel members only.
     send_just_member(":" + client.nickName + "!" + client.userName
         + "@localhost TOPIC " + chan->_name + " :" + chan->get_topic() + "\r\n", p.arg[0]);
     return ("");
@@ -560,14 +518,13 @@ bool Server::is_admin(request& req, Client& cli)
 
 void Server::Mode(Client& cli, request& req)
 {
-    // Every parameter access below is guarded by these two checks.
+
     if (req.arg.empty())
     {
         send_message(cli.socket_fd, ERR_NEEDMOREPARAMS(req.cmd));
         return;
     }
 
-    // "MODE <nick> +i" is a user mode, not a channel mode.
     if (req.arg[0] == cli.nickName)
     {
         if (req.arg.size() >= 2)
@@ -583,7 +540,6 @@ void Server::Mode(Client& cli, request& req)
         return;
     }
 
-    // "MODE #chan" with no mode string is a QUERY of the current modes.
     if (req.arg.size() < 2)
     {
         std::string modes = "+";
@@ -611,8 +567,6 @@ void Server::Mode(Client& cli, request& req)
 
     const std::string &mode = req.arg[1];
 
-    // Modes +k, +o, +l and -o need an argument; refuse rather than index
-    // req.arg[2] blindly.
     bool needsParam = (mode == "+k" || mode == "+o" || mode == "-o" || mode == "+l");
 
     if (needsParam && req.arg.size() < 3)
@@ -680,9 +634,6 @@ void Server::Mode(Client& cli, request& req)
             return;
         }
 
-        // Operator status is recorded ONLY in the admins list. The nickname
-        // is the user's identity and must never be rewritten - doing so made
-        // the user unreachable by PRIVMSG and un-kickable.
         if (mode == "+o")
         {
             if (!isOperator(chan, *target))
@@ -706,7 +657,5 @@ void Server::Mode(Client& cli, request& req)
         return;
     }
 
-    // Let the whole channel see the mode change.
     send_just_member(echo + "\r\n", req.arg[0]);
 }
-

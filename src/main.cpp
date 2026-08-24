@@ -11,7 +11,7 @@ int main(int argc, char **argv)
 	signal(SIGPIPE, SIG_IGN);
 
 	Server server;
-	
+
 	try
 	{
 		server.parseArgs(argv[1], argv[2]);
