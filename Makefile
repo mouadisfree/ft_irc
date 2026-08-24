@@ -1,17 +1,12 @@
 COMPILER = c++
 
-CPPFLAGS = -I headers/ -Wall -Werror -Wextra -std=c++98 -g #-fsanitize=address -g3
+CPPFLAGS = -I include/ -Wall -Werror -Wextra -std=c++98 -g #-fsanitize=address -g3
 
-SRCS = src/main.cpp src/establish_net/parse_args.cpp \
-		src/establish_net/setup_listener.cpp \
-		src/establish_net/awaiting_traffic.cpp \
-		src/establish_net/handling.cpp \
-		src/commands/authentication_cmd.cpp \
-		src/establish_net/Authentification.cpp \
-		src/commands/channel.cpp \
-		src/commands/join.cpp \
+SRCS = src/main.cpp \
+		$(wildcard src/server/*.cpp) \
+		$(wildcard src/commands/*.cpp)
 
-HEADERS = headers/server.hpp headers/client.hpp
+HEADERS = include/server.hpp include/client.hpp include/channel.hpp include/irc.hpp
 
 NAME = ircserv
 

@@ -1,4 +1,4 @@
-#include "../headers/server.hpp"
+#include "../include/server.hpp"
 
 int main(int argc, char **argv)
 {
@@ -14,9 +14,9 @@ int main(int argc, char **argv)
 
 	try
 	{
-		server.parseArgs(argv[1], argv[2]);
-		server.setupListener();
-		server.awaitingTraffic();
+		server.parseCommandLineArguments(argv[1], argv[2]);
+		server.setupServerSocketAndStartListening();
+		server.runServerEventLoop();
 	}
 	catch (const std::exception &e)
 	{

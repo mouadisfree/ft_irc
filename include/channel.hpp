@@ -30,7 +30,6 @@ class   Channel {
         Channel();
         Channel(std::string& channelName, Client *cl);
         ~Channel();
-        void update_onlinemembers();
-        void set_topic(std::string top, const std::string &setter);
-        std::string get_topic();
+        void setTopicAndRecordSetter(std::string top, const std::string &setter);
+        std::string getTopic();
 };

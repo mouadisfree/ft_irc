@@ -1,6 +1,6 @@
-#include "../../headers/server.hpp"
+#include "../../include/server.hpp"
 
-void	Server::setupListener()
+void	Server::setupServerSocketAndStartListening()
 {
 	sockaddr_in address;
 

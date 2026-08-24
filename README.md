@@ -68,6 +68,31 @@ empty is destroyed.
 
 ## Instructions
 
+### Project structure
+
+```
+ft_irc/
+├── include/            headers: Client, Channel, Server, protocol replies
+│   ├── client.hpp
+│   ├── channel.hpp
+│   ├── server.hpp
+│   └── irc.hpp
+├── src/
+│   ├── main.cpp        entry point
+│   ├── server/          networking: socket setup, the select() event loop,
+│   │                    client lifecycle, message queueing, command dispatch
+│   └── commands/         IRC command implementations: PASS, NICK, USER, JOIN,
+│                        PART, KICK, INVITE, TOPIC, MODE, PRIVMSG, the Channel class
+├── Makefile
+└── README.md
+```
+
+Every function lives in its own file, named after the function it contains
+(for example `src/server/runServerEventLoop.cpp` defines
+`Server::runServerEventLoop`). The Makefile picks up every `.cpp` file under
+`src/server/` and `src/commands/` automatically via wildcard, so no source
+list needs to be maintained by hand.
+
 ### Requirements
 
 - A C++ compiler supporting C++98 (`c++` / `g++` / `clang++`)
