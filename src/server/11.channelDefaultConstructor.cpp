@@ -1,6 +1,8 @@
 #include "../../include/server.hpp"
 #include <ctime>
 
+Channel::Channel() { }
+
 Channel::Channel(std::string &channelName, Client *cl)
 {
 	_name = channelName;
@@ -17,3 +19,6 @@ Channel::Channel(std::string &channelName, Client *cl)
 	topicSetter = (cl != NULL) ? cl->nickName : "";
 	topicTime = static_cast<long>(std::time(NULL));
 }
+
+
+Channel::~Channel(){}

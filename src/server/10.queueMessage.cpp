@@ -9,3 +9,10 @@ void Server::queueMessage(int sockfd, const std::string &message)
 
     it->second.outBuffer += message;
 }
+
+void Server::sendMessageToOneClient(int sockfd, const std::string& message)
+{
+    queueMessage(sockfd, message);
+}
+
+
