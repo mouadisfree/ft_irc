@@ -66,6 +66,11 @@ int Server::dispatchClientCommand(Client& cli, request& req)
     {
         sendMessageToOneClient(cli.socket_fd, RPL_ENDOFWHOIS(cli.nickName));
     }
+    else if (req.cmd == "WHO")
+    {
+        std::string mask = req.arg.empty() ? std::string("*") : req.arg[0];
+        sendMessageToOneClient(cli.socket_fd, RPL_ENDOFWHO(cli.nickName, mask));
+    }
     else if (req.cmd == "PING")
     {
         std::string token = req.arg.empty() ? std::string("irc.server.com") : req.arg[0];

@@ -20,6 +20,7 @@
 #define ERR_NORECIPIENT(cmd) (":irc.server.com 411 * :No recipient given (" + cmd + ")\r\n")
 #define ERR_NOSUCHCHANNEL(channel) (":irc.server.com 403 * " + channel + " :No such channel\r\n")
 #define RPL_ENDOFWHOIS(nickname) (":irc.server.com 318 " + nickname + " " + nickname + " :End of /WHOIS list\r\n")
+#define RPL_ENDOFWHO(nickname, mask) (":irc.server.com 315 " + nickname + " " + mask + " :End of /WHO list\r\n")
 
 #define KICKUSER(nick,user,channel, kicked) (":" + nick + "!" + user+ "@localhost KICK " + channel + " " + kicked + " :you have been kicked\r\n")
 
