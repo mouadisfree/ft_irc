@@ -8,7 +8,7 @@ void	Server::runServerEventLoop()
 
 	FD_SET(server_fd, &totalfds);
 
-	while(true) {
+	while(!g_shutdownRequested) {
 
 		readfds = totalfds;
 
@@ -53,4 +53,26 @@ void	Server::runServerEventLoop()
 
 		disconnectAndRemoveClosedClients(clientsReadyToBeRemoved, totalfds);
 	}
+
+	shutdownServer();
+}
+
+void	Server::shutdownServer()
+{
+	std::vector<int>	remaining;
+
+	for (std::map<int, Client>::iterator it = clients.begin(); it != clients.end(); it++)
+		remaining.push_back(it->first);
+
+	fd_set	dummy;
+	FD_ZERO(&dummy);
+	disconnectAndRemoveClosedClients(remaining, dummy);
+
+	for (std::map<std::string, Channel*>::iterator it = channels.begin(); it != channels.end(); it++)
+		delete it->second;
+	channels.clear();
+
+	close(server_fd);
+
+	std::cout << "\nirc server shutting down..." << std::endl;
 }

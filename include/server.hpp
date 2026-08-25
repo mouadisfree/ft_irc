@@ -33,6 +33,9 @@ int		convertPortArgumentToPortNumber(const std::string &portArgument);
 void	acceptNewClientConnection(std::map<int, Client> &clients, fd_set &totalfds, int server_fd);
 void	parseRawLineIntoRequest(const std::string &line, request &req);
 
+extern volatile sig_atomic_t g_shutdownRequested;
+void	handleShutdownSignal(int signum);
+
 class Server {
 
 	private:
@@ -50,6 +53,7 @@ class Server {
 		void	setupServerSocketAndStartListening();
 
 		void	runServerEventLoop();
+		void	shutdownServer();
 		void	disconnectAndRemoveClosedClients(std::vector<int> clientsToBeRemoved, fd_set &totalfds);
 		void	removeClientFromChannels(Client &client);
 		void	handleReadRequest(Client &client);

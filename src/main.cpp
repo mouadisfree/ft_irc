@@ -1,5 +1,13 @@
 #include "../include/server.hpp"
 
+volatile sig_atomic_t g_shutdownRequested = 0;
+
+void	handleShutdownSignal(int signum)
+{
+	(void)signum;
+	g_shutdownRequested = 1;
+}
+
 int main(int argc, char **argv)
 {
 	if (argc != 3)
@@ -9,6 +17,8 @@ int main(int argc, char **argv)
 	}
 
 	signal(SIGPIPE, SIG_IGN);
+	signal(SIGINT, handleShutdownSignal);
+	signal(SIGQUIT, handleShutdownSignal);
 
 	Server server;
 
