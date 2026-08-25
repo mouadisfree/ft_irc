@@ -7,7 +7,7 @@
 
 #define RPL_WELCOME(nickname)   (":irc.server.com 001 " + nickname + " :Welcome to the IRC Server, " + nickname + "!\r\n")
 #define RPL_YOURHOST(client, servername) (":irc.server.com 002 " + client + " :Your host is " + servername + ", running version IRCd-1.0\r\n")
-#define RPL_CREATED(client) (":irc.server.com 003 " + client + " :This server was created on January 1, 2022\r\n")
+#define RPL_CREATED(client) (":irc.server.com 003 " + client + " :This server was created on August 1, 2026\r\n")
 #define RPL_MYINFO(nickname, servername)    (":irc.server.com 004 " + nickname + " " + servername + " IRCd-1.0 <available user modes> <available channel modes> [<channel modes with a parameter>]\r\n")
 
 #define ERR_PASSWDMISMATCH()  (std::string(":irc.server.com 464 * :Password incorrect\r\n"))
