@@ -1,7 +1,9 @@
 #pragma once
 
 #include <string>
-#include "server.hpp"
+#include <vector>
+#include <ctime>
+#include "client.hpp"
 
 class   Channel {
 
@@ -27,9 +29,24 @@ class   Channel {
         std::vector<Client *> admins;
         Client* admin;
 
-        Channel();
-        Channel(std::string& channelName, Client *cl);
-        ~Channel();
+        Channel()
+            : _name(), _pass(), _topic(), _password(),
+              inviteOnly(false), hasPassword(false), changeTopic(false),
+              isLimit(false), maxsize(0), member_str(),
+              topicSetter(), topicTime(0), admin(NULL)
+        { }
+
+        Channel(const std::string& channelName, Client *cl)
+            : _name(channelName), _pass(), _topic(), _password(),
+              inviteOnly(false), hasPassword(false), changeTopic(false),
+              isLimit(false), maxsize(0), member_str(),
+              topicSetter((cl != NULL) ? cl->nickName : ""),
+              topicTime(static_cast<long>(std::time(NULL))), admin(NULL)
+        {
+            _members.push_back(cl);
+        }
+
+        ~Channel() { }
         void setTopicAndRecordSetter(std::string top, const std::string &setter);
         std::string getTopic();
 };
